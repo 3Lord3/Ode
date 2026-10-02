@@ -1,0 +1,5 @@
+/target
+.idea/
+*.secrets.json
+secret_key.txt
+.env
