@@ -45,3 +45,12 @@ assets = [
   { source = "packaging/org.example.Ode.metainfo.xml", dest = "/usr/share/metainfo/org.example.Ode.metainfo.xml", mode = "644" },
   { source = "LICENSE", dest = "/usr/share/doc/ode/LICENSE", mode = "644" },
 ]
+# find-requires in cargo-generate-rpm fails ("RPM_BUILD_ROOT not set") and
+# emits an rpm with no Requires, so auto-req is disabled and dependencies are
+# listed by soname: the same names on every rpm distribution.
+auto-req = "no"
+requires = {
+  "libadwaita-1.so.0()(64bit)" = "",
+  "libgtk-4.so.1()(64bit)" = "",
+  "libwebkitgtk-6.0.so.4()(64bit)" = "",
+}
