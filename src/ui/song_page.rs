@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -9,7 +9,7 @@ use webkit6::prelude::*;
 use crate::api::song::LyricAnnotation;
 use crate::i18n::Strings;
 use crate::ui::page::Page;
-use libadwaita::prelude::{MessageDialogExt, MessageDialogExtManual};
+use libadwaita::prelude::*;
 use crate::ui::AppState;
 
 /// Expression that extracts lyric text from genius.com containers
@@ -19,6 +19,17 @@ const LYRICS_JS: &str = r#"(() => {
     );
     return Array.from(els).map(e => e.innerText).join("\n\n");
 })()"#;
+
+/// Metadata for the info dialog; empty fields are skipped when rendering
+#[derive(Clone, Default)]
+struct SongInfo {
+    title: String,
+    artists: String,
+    release: String,
+    producers: String,
+    album: String,
+    about: String,
+}
 
 pub struct SongPage {
     pub content: gtk4::Widget,
@@ -33,11 +44,14 @@ pub struct SongPage {
     hover_line: Rc<RefCell<Option<i32>>>,
     open_btn: gtk4::Button,
     copy_btn: gtk4::Button,
+    info_btn: gtk4::Button,
+    info: Rc<RefCell<Option<SongInfo>>>,
     window: gtk4::Window,
     webview: webkit6::WebView,
     handler: Rc<RefCell<Option<glib::SignalHandlerId>>>,
     cur_lyrics: Rc<RefCell<String>>,
     cur_url: Rc<RefCell<String>>,
+    cur_id: Rc<Cell<u64>>,
     back_btn: gtk4::Button,
 }
 
@@ -133,6 +147,12 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
         .build();
     open_btn.add_css_class("flat");
 
+    let info_btn = gtk4::Button::builder()
+        .icon_name("help-about-symbolic")
+        .tooltip_text(tr.song_info)
+        .build();
+    info_btn.add_css_class("flat");
+
     let top = gtk4::Box::builder()
         .orientation(gtk4::Orientation::Horizontal)
         .spacing(8)
@@ -145,6 +165,7 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
         .build();
     top.append(&back_btn);
     top.append(&spacer);
+    top.append(&info_btn);
     top.append(&copy_btn);
     top.append(&open_btn);
 
@@ -203,11 +224,14 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
         hover_line: Rc::new(RefCell::new(None)),
         open_btn,
         copy_btn,
+        info_btn,
+        info: Rc::new(RefCell::new(None)),
         window: window.clone(),
         webview,
         handler: Rc::new(RefCell::new(None)),
         cur_lyrics: Rc::new(RefCell::new(String::new())),
         cur_url: Rc::new(RefCell::new(String::new())),
+        cur_id: Rc::new(Cell::new(0)),
         back_btn,
     };
     page_obj.wire(state);
@@ -401,6 +425,107 @@ fn show_lyrics(
     view.set_cursor_visible(true);
 }
 
+/// Metadata list plus the description, as two pages of one stack
+fn show_song_info(parent: &gtk4::Window, tr: &'static Strings, s: &SongInfo) {
+    let dlg = libadwaita::Dialog::builder()
+        .content_width(400)
+        .build();
+    let header = libadwaita::HeaderBar::new();
+    let title = libadwaita::WindowTitle::new(tr.song_info, "");
+    header.set_title_widget(Some(&title));
+    let back = gtk4::Button::from_icon_name("go-previous-symbolic");
+    back.add_css_class("flat");
+    back.set_visible(false);
+    header.pack_start(&back);
+
+    let stack = gtk4::Stack::new();
+
+    let page = libadwaita::PreferencesPage::new();
+    let group = libadwaita::PreferencesGroup::new();
+    for (icon, label, value) in [
+        ("audio-x-generic-symbolic", tr.info_title, &s.title),
+        ("avatar-default-symbolic", tr.info_artists, &s.artists),
+        ("user-info-symbolic", tr.info_producers, &s.producers),
+        ("x-office-calendar-symbolic", tr.info_release, &s.release),
+        ("folder-music-symbolic", tr.info_album, &s.album),
+    ] {
+        let value = value.trim();
+        if value.is_empty() {
+            continue;
+        }
+        let row = libadwaita::ActionRow::builder()
+            .title(label)
+            .subtitle(value)
+            .title_lines(0)
+            .subtitle_lines(0)
+            .subtitle_selectable(true)
+            .build();
+        row.add_prefix(&gtk4::Image::from_icon_name(icon));
+        group.add(&row);
+    }
+
+    let about = s.about.trim();
+    if !about.is_empty() {
+        let row = libadwaita::ActionRow::builder()
+            .title(tr.info_about)
+            .activatable(true)
+            .build();
+        row.add_prefix(&gtk4::Image::from_icon_name("help-about-symbolic"));
+        row.add_suffix(&gtk4::Image::from_icon_name("go-next-symbolic"));
+        let st_open = stack.clone();
+        let back_open = back.clone();
+        let title_open = title.clone();
+        let title_about = tr.info_about.to_string();
+        row.connect_activated(move |_| {
+            st_open.set_visible_child_name("about");
+            title_open.set_title(&title_about);
+            back_open.set_visible(true);
+        });
+        group.add(&row);
+
+        let label = gtk4::Label::builder()
+            .label(about)
+            .wrap(true)
+            .wrap_mode(gtk4::pango::WrapMode::WordChar)
+            .halign(gtk4::Align::Start)
+            .valign(gtk4::Align::Start)
+            .hexpand(true)
+            .margin_top(18)
+            .margin_bottom(18)
+            .margin_start(18)
+            .margin_end(18)
+            .build();
+        let scroll = gtk4::ScrolledWindow::builder()
+            .child(&label)
+            .hscrollbar_policy(gtk4::PolicyType::Never)
+            .vscrollbar_policy(gtk4::PolicyType::Automatic)
+            .max_content_height(420)
+            .propagate_natural_height(true)
+            .hexpand(true)
+            .build();
+        stack.add_named(&scroll, Some("about"));
+
+        let st_back = stack.clone();
+        let title_back = title.clone();
+        let title_list = tr.song_info.to_string();
+        let back_self = back.clone();
+        back.connect_clicked(move |_| {
+            st_back.set_visible_child_name("list");
+            title_back.set_title(&title_list);
+            back_self.set_visible(false);
+        });
+    }
+    page.add(&group);
+    stack.add_named(&page, Some("list"));
+    stack.set_visible_child_name("list");
+
+    let toolbar = libadwaita::ToolbarView::new();
+    toolbar.add_top_bar(&header);
+    toolbar.set_content(Some(&stack));
+    dlg.set_child(Some(&toolbar));
+    dlg.present(Some(parent));
+}
+
 fn open_url(url: &str) {
     let _ = gio::AppInfo::launch_default_for_uri(url, None::<&gio::AppLaunchContext>);
 }
@@ -435,6 +560,17 @@ impl SongPage {
 
         // Copy exactly what is shown: take the text from the TextView buffer, which
         // already excludes utility headings and extra blank lines
+        let info = self.info.clone();
+        let st_info = state.clone();
+        let parent_info = self.window.clone();
+        
+        self.info_btn.connect_clicked(move |_| {
+            let tr = st_info.tr.strings();
+            if let Some(s) = info.borrow().as_ref() {
+                show_song_info(&parent_info, tr, s);
+            }
+        });
+
         let copy_view = self.lyrics_view.clone();
         let st_copy = state.clone();
         self.copy_btn.connect_clicked(move |_| {
@@ -488,18 +624,12 @@ impl SongPage {
                     .collect::<Vec<_>>()
                     .join("\n\n");
                 let tr = st_click.tr.strings();
-                // An Adw dialog, not a GTK one: rounded corners and a dimmed background
-                let dlg = libadwaita::MessageDialog::builder()
-                    .modal(true)
-                    // Without transient_for GTK centers the dialog on the monitor, which can
-                    // put it off the app window
-                    .transient_for(&parent)
+                let dlg = libadwaita::AlertDialog::builder()
                     .heading(tr.annot_title)
                     .body(&body)
-                    .close_response("close")
                     .build();
                 dlg.add_response("close", tr.close);
-                dlg.choose(None::<&gio::Cancellable>, |_| {});
+                dlg.choose(Some(&parent), None::<&gio::Cancellable>, |_| {});
             }
         });
         view.add_controller(gesture);
@@ -545,6 +675,8 @@ impl SongPage {
     fn open_song(&mut self, state: &Rc<AppState>, id: u64) {
         let tr = state.tr.strings();
         self.page.show_loading();
+        self.cur_id.set(id);
+        *self.info.borrow_mut() = None;
         // Clear the header right away so the previous track's cover and title do not flash
         self.fact_cover.set_paintable(None::<&gtk4::gdk::Texture>);
         self.fact_title.set_label("");
@@ -570,11 +702,17 @@ impl SongPage {
         let hover_line = self.hover_line.clone();
         let st = state.clone();
         let st2 = st.clone();
+        let rc_info = self.info.clone();
+        let req_id = self.cur_id.clone();
 
         st.async_fetch(
             move || crate::api::song::song(&client_lyr, id).map_err(|e| e.to_string()),
             move |res| match res {
                 Ok(song) => {
+                    // The user may have switched songs meanwhile
+                    if req_id.get() != id {
+                        return;
+                    }
                     // Title and cover appear only together with the lyrics, so the header layout
                     // does not break before the text arrives
                     let title_txt = song.title.clone().unwrap_or_default();
@@ -590,7 +728,7 @@ impl SongPage {
                             song.primary_artist.as_ref().map(|a| a.name.clone()).unwrap_or_default()
                         });
                     let sub_txt = [
-                        artist,
+                        artist.clone(),
                         tr.localize_date(
                             song.release_date_for_display.as_deref().unwrap_or_default(),
                         ),
@@ -598,6 +736,38 @@ impl SongPage {
                     .join(" · ");
                     let art_url = song.song_art_image_url.clone().unwrap_or_default();
                     *cur_url.borrow_mut() = song.url.clone();
+                    *rc_info.borrow_mut() = Some(SongInfo {
+                        // `title` is the clean name; `full_title` carries "by ..."
+                        title: if title_txt.trim().is_empty() {
+                            split_ft_by(&full).0
+                        } else {
+                            title_txt.clone()
+                        },
+                        artists: artist.clone(),
+                        release: tr.localize_date(song.release_date_for_display.as_deref().unwrap_or_default()),
+                        producers: song
+                            .producer_artists
+                            .iter()
+                            .map(|p| p.name.clone())
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                        album: song
+                            .album
+                            .as_ref()
+                            .map(|a| {
+                                let name = a
+                                    .name
+                                    .clone()
+                                    .or_else(|| a.full_title.as_deref().map(split_ft_by).map(|(t, _)| t))
+                                    .unwrap_or_default();
+                                match song.track_number {
+                                    Some(n) if n > 0 => format!("{n}. {name}"),
+                                    _ => name,
+                                }
+                            })
+                            .unwrap_or_default(),
+                        about: crate::api::song::description_plain(&song).unwrap_or_default(),
+                    });
 
                     match crate::api::song::api_lyrics(&song) {
                         Some(lyr) => {
@@ -608,7 +778,6 @@ impl SongPage {
                             page.show_body();
                         }
                         None => {
-                            // api.genius.com does not return lyrics, fall back to the embedded WebKit;
                             // header and lyrics are shown as one block once the text loads
                             fetch_lyrics_web(
                                 webview, handler, view, spin, cur, annots, annot_lines, hover_line,

@@ -10,7 +10,7 @@ pub enum Msg {
 }
 
 /// Build the preferences window. `on_msg` fires on events that affect the rest of the UI or the style
-pub fn build(state: &Rc<AppState>, parent: &gtk4::Window, on_msg: Rc<dyn Fn(Msg)>) -> libadwaita::PreferencesWindow {
+pub fn build(state: &Rc<AppState>, on_msg: Rc<dyn Fn(Msg)>) -> libadwaita::PreferencesDialog {
     let tr = state.tr.strings();
 
     let general = libadwaita::PreferencesGroup::builder().title(tr.general_tab).build();
@@ -30,12 +30,11 @@ pub fn build(state: &Rc<AppState>, parent: &gtk4::Window, on_msg: Rc<dyn Fn(Msg)
     let page = libadwaita::PreferencesPage::new();
     page.add(&general);
 
-    let win = libadwaita::PreferencesWindow::builder()
-        .transient_for(parent)
-        .content(&page)
-        .width_request(480)
-        .height_request(480)
+    let dlg = libadwaita::PreferencesDialog::builder()
+        .content_width(480)
+        .content_height(480)
         .build();
+    dlg.add(&page);
 
     let state_c = state.clone();
     let on_msg_c = on_msg.clone();
@@ -44,6 +43,6 @@ pub fn build(state: &Rc<AppState>, parent: &gtk4::Window, on_msg: Rc<dyn Fn(Msg)
         on_msg_c(Msg::CacheCleared);
     });
 
-    win
+    dlg
 }
 
