@@ -26,7 +26,7 @@ name = "ode"
 maintainer = "Ode maintainers"
 copyright = "2025 Ode authors"
 license-file = ["LICENSE", "0"]
-description = "Desktop lyrics reader for the Genius API"
+# Short description comes from [package].description; this is the long one.
 extended-description = """Search Genius and read song lyrics in a GTK4/libadwaita window."""
 depends = "libgtk-4-1, libadwaita-1-0, libwebkitgtk-6.0-4"
 assets = [
