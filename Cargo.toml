@@ -45,6 +45,3 @@ assets = [
   { source = "packaging/org.example.Ode.metainfo.xml", dest = "/usr/share/metainfo/org.example.Ode.metainfo.xml", mode = "644" },
   { source = "LICENSE", dest = "/usr/share/doc/ode/LICENSE", mode = "644" },
 ]
-# auto-req defaults to true and derives Requires: from the linked sonames, so
-# the rpm stays distribution-agnostic.
-auto-req = true
