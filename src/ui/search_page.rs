@@ -44,7 +44,10 @@ pub fn build(state: &Rc<AppState>, on_pick: PickFn, on_search: FocusFn) -> Searc
         .hexpand(true)
         .vexpand(true)
         .build();
-    let clamp = libadwaita::Clamp::builder().maximum_size(840).child(&scroll).build();
+    let clamp = libadwaita::Clamp::builder()
+        .maximum_size(840)
+        .child(&scroll)
+        .build();
     page.append(&clamp);
     page.show_status(tr.init_search, Some(tr.search_hint), "edit-find-symbolic");
 
@@ -170,7 +173,11 @@ fn run(
     let client = match state.client() {
         Some(c) => c,
         None => {
-            page.show_status(tr.no_token_title, Some(tr.no_token_desc), "dialog-error-symbolic");
+            page.show_status(
+                tr.no_token_title,
+                Some(tr.no_token_desc),
+                "dialog-error-symbolic",
+            );
             return;
         }
     };
@@ -211,7 +218,10 @@ fn run(
 /// Splits a genius `full_title` into track title and artists on the last " by "
 fn split_title_by(full: &str) -> (String, String) {
     match full.rfind(" by ") {
-        Some(idx) => (full[..idx].trim().to_string(), full[idx + 4..].trim().to_string()),
+        Some(idx) => (
+            full[..idx].trim().to_string(),
+            full[idx + 4..].trim().to_string(),
+        ),
         None => (full.to_string(), String::new()),
     }
 }
@@ -230,7 +240,10 @@ fn row_for(state: &Rc<AppState>, result: &SearchResult) -> gtk4::ListBoxRow {
                 .filter(|v| !v.is_empty())
                 .or_else(|| (!artists.is_empty()).then_some(artists))
                 .unwrap_or_else(|| {
-                    s.primary_artist.as_ref().map(|a| a.name.clone()).unwrap_or_default()
+                    s.primary_artist
+                        .as_ref()
+                        .map(|a| a.name.clone())
+                        .unwrap_or_default()
                 });
             (title, subtitle)
         }

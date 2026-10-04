@@ -50,7 +50,14 @@ impl Page {
         let root = gtk4::Overlay::new();
         root.set_child(Some(&stack));
 
-        Self { root, stack, holder, body, status, spinner }
+        Self {
+            root,
+            stack,
+            holder,
+            body,
+            status,
+            spinner,
+        }
     }
 
     pub fn append<W: IsA<gtk4::Widget>>(&self, w: &W) {

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.example.Ode</id>
+  <name>Ode</name>
+  <summary>Read lyrics from Genius</summary>
+  <summary xml:lang="ru">Читать тексты песен из Genius</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      Searches Genius and shows the song text in its own window. GTK4 and
+      libadwaita: theme, fonts and locale come from the system.
+    </p>
+    <p xml:lang="ru">
+      Поиск по Genius, текст песни в собственном окне. GTK4 и libadwaita:
+      тема, шрифты и локаль берутся из системы.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.example.Ode.desktop</launchable>
+  <content_rating type="oars-1.1"/>
+</component>

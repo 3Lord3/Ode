@@ -9,8 +9,8 @@ use webkit6::prelude::*;
 use crate::api::song::LyricAnnotation;
 use crate::i18n::Strings;
 use crate::ui::page::Page;
-use libadwaita::prelude::*;
 use crate::ui::AppState;
+use libadwaita::prelude::*;
 
 /// Expression that extracts lyric text from genius.com containers
 const LYRICS_JS: &str = r#"(() => {
@@ -73,7 +73,10 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
     sub.add_css_class("dim-label");
     sub.set_wrap(true);
 
-    let head = gtk4::Box::builder().orientation(gtk4::Orientation::Horizontal).spacing(16).build();
+    let head = gtk4::Box::builder()
+        .orientation(gtk4::Orientation::Horizontal)
+        .spacing(16)
+        .build();
     head.append(&cover);
     let headtext = gtk4::Box::builder()
         .orientation(gtk4::Orientation::Vertical)
@@ -122,8 +125,10 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
         );
     }
 
-
-    let attribution = gtk4::Label::builder().label(tr.lyrics_attribution).halign(gtk4::Align::End).build();
+    let attribution = gtk4::Label::builder()
+        .label(tr.lyrics_attribution)
+        .halign(gtk4::Align::End)
+        .build();
     attribution.add_css_class("dim-label");
 
     // Action buttons: back, copy, open on genius (text lives in the tooltip)
@@ -190,7 +195,10 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
     // The scroll wraps the whole song page (header, lyrics, buttons). The scrollbar
     // has to sit at the window edge rather than at the text column edge, so the
     // ScrolledWindow wraps the Clamp, not the other way around
-    let clamp = libadwaita::Clamp::builder().maximum_size(860).child(&body).build();
+    let clamp = libadwaita::Clamp::builder()
+        .maximum_size(860)
+        .child(&body)
+        .build();
     let scroll = gtk4::ScrolledWindow::builder()
         .child(&clamp)
         .vexpand(true)
@@ -209,7 +217,11 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
     page.attach_hidden(&webview);
 
     // Nothing to show yet
-    page.show_status(tr.select_title, Some(tr.select_desc), "audio-x-generic-symbolic");
+    page.show_status(
+        tr.select_title,
+        Some(tr.select_desc),
+        "audio-x-generic-symbolic",
+    );
 
     let mut page_obj = SongPage {
         content: page.root.clone().upcast::<gtk4::Widget>(),
@@ -240,7 +252,10 @@ pub fn build(state: &Rc<AppState>, window: &gtk4::Window) -> SongPage {
 
 fn split_ft_by(full: &str) -> (String, String) {
     match full.rfind(" by ") {
-        Some(idx) => (full[..idx].trim().to_string(), full[idx + 4..].trim().to_string()),
+        Some(idx) => (
+            full[..idx].trim().to_string(),
+            full[idx + 4..].trim().to_string(),
+        ),
         None => (full.to_string(), String::new()),
     }
 }
@@ -427,9 +442,7 @@ fn show_lyrics(
 
 /// Metadata list plus the description, as two pages of one stack
 fn show_song_info(parent: &gtk4::Window, tr: &'static Strings, s: &SongInfo) {
-    let dlg = libadwaita::Dialog::builder()
-        .content_width(400)
-        .build();
+    let dlg = libadwaita::Dialog::builder().content_width(400).build();
     let header = libadwaita::HeaderBar::new();
     let title = libadwaita::WindowTitle::new(tr.song_info, "");
     header.set_title_widget(Some(&title));
@@ -563,7 +576,7 @@ impl SongPage {
         let info = self.info.clone();
         let st_info = state.clone();
         let parent_info = self.window.clone();
-        
+
         self.info_btn.connect_clicked(move |_| {
             let tr = st_info.tr.strings();
             if let Some(s) = info.borrow().as_ref() {
@@ -651,10 +664,9 @@ impl SongPage {
         motion.connect_leave(move |_| {
             if let Some(p) = *hv_leave.borrow() {
                 let buf = view_leave.buffer();
-                if let (Some((s, e)), Some(t)) = (
-                    line_iters(&buf, p),
-                    buf.tag_table().lookup("annot_hover"),
-                ) {
+                if let (Some((s, e)), Some(t)) =
+                    (line_iters(&buf, p), buf.tag_table().lookup("annot_hover"))
+                {
                     buf.remove_tag(&t, &s, &e);
                 }
             }
@@ -725,7 +737,10 @@ impl SongPage {
                         .filter(|v| !v.is_empty())
                         .or_else(|| (!ft_artists.is_empty()).then_some(ft_artists))
                         .unwrap_or_else(|| {
-                            song.primary_artist.as_ref().map(|a| a.name.clone()).unwrap_or_default()
+                            song.primary_artist
+                                .as_ref()
+                                .map(|a| a.name.clone())
+                                .unwrap_or_default()
                         });
                     let sub_txt = [
                         artist.clone(),
@@ -744,7 +759,9 @@ impl SongPage {
                             title_txt.clone()
                         },
                         artists: artist.clone(),
-                        release: tr.localize_date(song.release_date_for_display.as_deref().unwrap_or_default()),
+                        release: tr.localize_date(
+                            song.release_date_for_display.as_deref().unwrap_or_default(),
+                        ),
                         producers: song
                             .producer_artists
                             .iter()
@@ -758,7 +775,9 @@ impl SongPage {
                                 let name = a
                                     .name
                                     .clone()
-                                    .or_else(|| a.full_title.as_deref().map(split_ft_by).map(|(t, _)| t))
+                                    .or_else(|| {
+                                        a.full_title.as_deref().map(split_ft_by).map(|(t, _)| t)
+                                    })
                                     .unwrap_or_default();
                                 match song.track_number {
                                     Some(n) if n > 0 => format!("{n}. {name}"),
@@ -774,21 +793,47 @@ impl SongPage {
                             title.set_label(&title_txt);
                             sub.set_label(&sub_txt);
                             load_cover(&st2, art_url, cover);
-                            show_lyrics(lyr, &view, &cur, &annots.borrow(), &annot_lines, &hover_line);
+                            show_lyrics(
+                                lyr,
+                                &view,
+                                &cur,
+                                &annots.borrow(),
+                                &annot_lines,
+                                &hover_line,
+                            );
                             page.show_body();
                         }
                         None => {
                             // header and lyrics are shown as one block once the text loads
                             fetch_lyrics_web(
-                                webview, handler, view, spin, cur, annots, annot_lines, hover_line,
-                                page, song.url.clone(), tr, title, sub, cover,
-                                title_txt, sub_txt, art_url, st2,
+                                webview,
+                                handler,
+                                view,
+                                spin,
+                                cur,
+                                annots,
+                                annot_lines,
+                                hover_line,
+                                page,
+                                song.url.clone(),
+                                tr,
+                                title,
+                                sub,
+                                cover,
+                                title_txt,
+                                sub_txt,
+                                art_url,
+                                st2,
                             );
                         }
                     }
                 }
                 Err(e) => {
-                    page.show_status(tr.error_title, Some(&e.to_string()), "dialog-error-symbolic");
+                    page.show_status(
+                        tr.error_title,
+                        Some(&e.to_string()),
+                        "dialog-error-symbolic",
+                    );
                 }
             },
         );
@@ -811,15 +856,20 @@ impl SongPage {
                     *rc_annots.borrow_mut() = list;
                     let cur_txt = rc_cur.borrow().clone();
                     if !cur_txt.is_empty() {
-                        show_lyrics(cur_txt, &rc_view, &rc_cur, &rc_annots.borrow(), &rc_annot_lines, &rc_hover_line);
+                        show_lyrics(
+                            cur_txt,
+                            &rc_view,
+                            &rc_cur,
+                            &rc_annots.borrow(),
+                            &rc_annot_lines,
+                            &rc_hover_line,
+                        );
                     }
                 }
                 _ => {}
             },
         );
     }
-
-    
 }
 
 /// Loads the song URL in a hidden WebKitWebView and extracts the lyrics via
@@ -945,10 +995,23 @@ fn fetch_lyrics_web(
                         let au_r = aurl.clone();
                         retry.connect_clicked(move |_| {
                             fetch_lyrics_web(
-                                wvr.clone(), hdr.clone(), vr.clone(), sr.clone(),
-                                cr.clone(), anr.clone(), anlr.clone(), hlr.clone(),
-                                pr.clone(), urlr.clone(), tr, trl.clone(), srl.clone(),
-                                cvr.clone(), tt_r.clone(), st_r.clone(), au_r.clone(),
+                                wvr.clone(),
+                                hdr.clone(),
+                                vr.clone(),
+                                sr.clone(),
+                                cr.clone(),
+                                anr.clone(),
+                                anlr.clone(),
+                                hlr.clone(),
+                                pr.clone(),
+                                urlr.clone(),
+                                tr,
+                                trl.clone(),
+                                srl.clone(),
+                                cvr.clone(),
+                                tt_r.clone(),
+                                st_r.clone(),
+                                au_r.clone(),
                                 str.clone(),
                             );
                         });
@@ -967,4 +1030,3 @@ fn fetch_lyrics_web(
     *handler.borrow_mut() = Some(hid);
     webview.load_uri(&url);
 }
-

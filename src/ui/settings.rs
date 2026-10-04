@@ -13,7 +13,9 @@ pub enum Msg {
 pub fn build(state: &Rc<AppState>, on_msg: Rc<dyn Fn(Msg)>) -> libadwaita::PreferencesDialog {
     let tr = state.tr.strings();
 
-    let general = libadwaita::PreferencesGroup::builder().title(tr.general_tab).build();
+    let general = libadwaita::PreferencesGroup::builder()
+        .title(tr.general_tab)
+        .build();
 
     let clear_btn = libadwaita::ActionRow::builder()
         .title(tr.clear_cache)
@@ -45,4 +47,3 @@ pub fn build(state: &Rc<AppState>, on_msg: Rc<dyn Fn(Msg)>) -> libadwaita::Prefe
 
     dlg
 }
-

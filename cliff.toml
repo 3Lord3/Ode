@@ -1,0 +1,39 @@
+# Release notes are generated from the commit log, so the log is the source of
+# truth for what a release contains.
+
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+filter_commits = false
+protect_breaking_commits = true
+tag_pattern = "v[0-9]*"
+ignore_tags = "v[0-9].*-rc[0-9]*"
+sort_commits = "oldest"
+
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^refactor", group = "<!-- 3 -->Refactoring" },
+  { message = "^doc", group = "<!-- 4 -->Documentation" },
+  { message = "^test", group = "<!-- 5 -->Testing" },
+  { message = "^(ci|build)", group = "<!-- 6 -->Build and CI" },
+  { message = "^(flatpak|appimage|packaging|deb|rpm)", group = "<!-- 7 -->Packaging" },
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^chore", group = "<!-- 8 -->Miscellaneous" },
+  { message = "^Merge", skip = true },
+  { message = ".*", group = "<!-- 9 -->Other" },
+]

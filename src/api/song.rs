@@ -13,8 +13,6 @@ pub fn song(client: &GeniusClient, id: u64) -> Result<Song, ApiError> {
     client.get(&format!("/songs/{id}"), &[("text_format", "plain")])
 }
 
-
-
 /// Lyrics from the API fields (`lyrics_plaintext` / `lyrics`), if present at all
 /// The real source is the embedded WebKitWebView (see `ui::song_page`), because the
 /// current api.genius.com no longer returns lyrics
@@ -108,11 +106,8 @@ fn strip_tags(html: &str) -> String {
         match c {
             '<' => depth += 1,
             '>' => depth = depth.saturating_sub(1),
-            '\n' | '\t' => {
-                if depth > 0 {
-                    out.push(' ');
-                }
-            }
+            '\n' | '\t' if depth > 0 => out.push(' '),
+            '\n' | '\t' => {}
             _ if depth == 0 => out.push(c),
             _ => {}
         }
@@ -159,9 +154,16 @@ fn decode_entities(s: &str) -> String {
                     .or_else(|| ent.strip_prefix("&#"))
                     .and_then(|n| n.strip_suffix(';'));
                 code.and_then(|n| {
-                    u32::from_str_radix(n, if ent.starts_with("&#x") || ent.starts_with("&#X") { 16 } else { 10 })
-                        .ok()
-                        .and_then(char::from_u32)
+                    u32::from_str_radix(
+                        n,
+                        if ent.starts_with("&#x") || ent.starts_with("&#X") {
+                            16
+                        } else {
+                            10
+                        },
+                    )
+                    .ok()
+                    .and_then(char::from_u32)
                 })
                 .map(String::from)
             });
@@ -183,12 +185,18 @@ mod tests {
 
     #[test]
     fn strips_html_in_description() {
-        assert_eq!(strip_tags("<p>Hello <b>world</b>&amp; more</p>"), "Hello world&amp; more");
+        assert_eq!(
+            strip_tags("<p>Hello <b>world</b>&amp; more</p>"),
+            "Hello world&amp; more"
+        );
         assert_eq!(
             decode_entities("a &mdash; b &#8212; c &#x27;d&#39;"),
             "a \u{2014} b \u{2014} c 'd'"
         );
-        assert_eq!(decode_entities("plain < text &unknown; ok"), "plain < text &unknown; ok");
+        assert_eq!(
+            decode_entities("plain < text &unknown; ok"),
+            "plain < text &unknown; ok"
+        );
     }
 
     #[test]
@@ -200,8 +208,7 @@ mod tests {
     #[test]
     fn description_object_plain_is_used() {
         let s: Song =
-            serde_json::from_str(r#"{"id":1,"url":"u","description":{"plain":"A song"}}"#)
-                .unwrap();
+            serde_json::from_str(r#"{"id":1,"url":"u","description":{"plain":"A song"}}"#).unwrap();
         assert_eq!(description_plain(&s).as_deref(), Some("A song"));
     }
 
@@ -214,10 +221,9 @@ mod tests {
 
     #[test]
     fn description_is_plain_text() {
-        let s: Song = serde_json::from_str(
-            r#"{"id":1,"url":"u","description":"<p>A <i>song</i></p>"}"#,
-        )
-        .unwrap();
+        let s: Song =
+            serde_json::from_str(r#"{"id":1,"url":"u","description":"<p>A <i>song</i></p>"}"#)
+                .unwrap();
         assert_eq!(description_plain(&s).as_deref(), Some("A song"));
     }
 

@@ -1,0 +1,47 @@
+# Single module: gtk4, libadwaita and WebKitGTK ship in the GNOME SDK, so the
+# only extension needed is the Rust SDK.
+#
+# STATUS: written, not yet built here (no flatpak-builder available); treat the
+# runtime version as a starting point.
+app-id: org.example.Ode
+runtime: org.gnome.Platform
+runtime-version: "48"
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: ode
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # Genius API traffic; WebKit needs it to load artwork and inline annotations.
+  - --share=network
+
+modules:
+  - name: ode
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      build-args:
+        # cargo needs to fetch the dependency tree (pinned by Cargo.lock).
+        - --share=network
+      env:
+        CARGO_HOME: /run/build/ode/cargo
+    build-commands:
+      - cargo build --release
+      - install -Dm755 target/release/ode /app/bin/ode
+      - install -Dm644 packaging/org.example.Ode.desktop
+        /app/share/applications/org.example.Ode.desktop
+      - install -Dm644 packaging/hicolor/128x128/apps/org.example.Ode.svg
+        /app/share/icons/hicolor/128x128/apps/org.example.Ode.svg
+      - install -Dm644 packaging/org.example.Ode.metainfo.xml
+        /app/share/metainfo/org.example.Ode.metainfo.xml
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - target
+          - .flatpak-builder
+          - .git

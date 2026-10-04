@@ -19,7 +19,11 @@ impl Cache {
                     .join(".cache")
             })
             .join("genius");
-        Self { dir, ttl_secs, max_bytes: max_mb * 1024 * 1024 }
+        Self {
+            dir,
+            ttl_secs,
+            max_bytes: max_mb * 1024 * 1024,
+        }
     }
 
     fn path_for(&self, url: &str) -> PathBuf {
@@ -33,7 +37,13 @@ impl Cache {
     pub fn get(&self, url: &str) -> Option<String> {
         let p = self.path_for(url);
         let meta = std::fs::metadata(&p).ok()?;
-        let age = now().saturating_sub(meta.modified().ok()?.duration_since(UNIX_EPOCH).ok()?.as_secs());
+        let age = now().saturating_sub(
+            meta.modified()
+                .ok()?
+                .duration_since(UNIX_EPOCH)
+                .ok()?
+                .as_secs(),
+        );
         if age > self.ttl_secs {
             return None;
         }
@@ -82,15 +92,36 @@ impl Cache {
 }
 
 fn now() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Cache::new points at the real user cache dir; the tests used it directly
+    // and wiped it, racing each other in parallel. Give each test its own
+    // throwaway temp dir instead.
+    fn test_cache(ttl_secs: u64, max_mb: u64) -> Cache {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static N: AtomicUsize = AtomicUsize::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "ode-cache-test-{}",
+            N.fetch_add(1, Ordering::SeqCst)
+        ));
+        Cache {
+            dir,
+            ttl_secs,
+            max_bytes: max_mb * 1024 * 1024,
+        }
+    }
+
     #[test]
     fn put_get() {
-        let c = Cache::new(60, 50);
+        let c = test_cache(60, 50);
         let u = "https://example.test/1";
         c.put(u, "body");
         assert_eq!(c.get(u).as_deref(), Some("body"));
@@ -100,7 +131,7 @@ mod tests {
 
     #[test]
     fn expired_entry_is_dropped() {
-        let c = Cache::new(0, 50);
+        let c = test_cache(0, 50);
         let u = "https://example.test/2";
         c.put(u, "body");
         std::thread::sleep(std::time::Duration::from_secs(1));
@@ -111,7 +142,7 @@ mod tests {
     #[test]
     fn limit_drops_oldest_first() {
         // 1 MB limit: the second put evicts the first entry
-        let c = Cache::new(3600, 1);
+        let c = test_cache(3600, 1);
         let a = "https://example.test/a";
         let b = "https://example.test/b";
         let big = "x".repeat(700 * 1024);
@@ -123,4 +154,3 @@ mod tests {
         c.clear().unwrap();
     }
 }
-

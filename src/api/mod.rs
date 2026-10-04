@@ -64,7 +64,11 @@ impl GeniusClient {
 
     /// GET. Responses are served from the on-disk cache while fresh. On 429 retries
     /// up to 3 times with backoff; on 401 returns Auth
-    pub fn get<T: DeserializeOwned>(&self, path: &str, params: &[(&str, &str)]) -> Result<T, ApiError> {
+    pub fn get<T: DeserializeOwned>(
+        &self,
+        path: &str,
+        params: &[(&str, &str)],
+    ) -> Result<T, ApiError> {
         let key = cache_key(path, params);
         if let Some(text) = self.cache.get(&key) {
             if let Ok(v) = self.decode(&text, path) {
@@ -100,8 +104,10 @@ impl GeniusClient {
     }
 
     fn decode<T: DeserializeOwned>(&self, text: &str, path: &str) -> Result<T, ApiError> {
-        if path.starts_with("/songs/") || path == "/search"
-            || path.starts_with("/artists/") || path == "/referents"
+        if path.starts_with("/songs/")
+            || path == "/search"
+            || path.starts_with("/artists/")
+            || path == "/referents"
         {
             parse_envelope(text, path)
         } else {
@@ -112,10 +118,7 @@ impl GeniusClient {
 
 /// Cache key: the path plus the query parameters in a fixed order
 fn cache_key(path: &str, params: &[(&str, &str)]) -> String {
-    let q: Vec<String> = params
-        .iter()
-        .map(|(k, v)| format!("{k}={v}"))
-        .collect();
+    let q: Vec<String> = params.iter().map(|(k, v)| format!("{k}={v}")).collect();
     if q.is_empty() {
         path.to_string()
     } else {
@@ -143,8 +146,8 @@ pub fn parse_envelope<T: DeserializeOwned>(text: &str, path: &str) -> Result<T, 
 
 #[cfg(test)]
 mod tests {
-    use crate::api::models::{SearchResponse, SearchResult, Song};
     use super::*;
+    use crate::api::models::{SearchResponse, SearchResult, Song};
 
     #[test]
     fn envelope_search() {

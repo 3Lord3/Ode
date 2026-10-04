@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Ode
+Comment=Read lyrics from Genius
+Comment[ru]=Читать тексты песен из Genius
+Keywords=lyrics;song;music;genius;text
+Keywords[ru]=тексты;песня;музыка;genius
+Exec=ode
+Icon=org.example.Ode
+Terminal=false
+Categories=AudioVideo;Audio;Music;
+StartupWMClass=ode
