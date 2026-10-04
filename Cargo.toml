@@ -19,3 +19,32 @@ webkit6 = { version = "0.5", features = ["v2_42"] }
 
 [profile.release]
 lto = true
+
+# Packaging metadata consumed by scripts/package.sh (cargo-deb, cargo-generate-rpm).
+[package.metadata.deb]
+name = "ode"
+maintainer = "Ode maintainers"
+copyright = "2025 Ode authors"
+license-file = ["LICENSE", "0"]
+description = "Desktop lyrics reader for the Genius API"
+extended-description = """Search Genius and read song lyrics in a GTK4/libadwaita window."""
+depends = "libgtk-4-1, libadwaita-1-0, libwebkitgtk-6.0-4"
+assets = [
+  ["target/release/ode", "usr/bin/", "755"],
+  ["packaging/org.example.Ode.desktop", "usr/share/applications/", "644"],
+  ["packaging/hicolor/128x128/apps/org.example.Ode.svg", "usr/share/icons/hicolor/128x128/apps/", "644"],
+  ["packaging/org.example.Ode.metainfo.xml", "usr/share/metainfo/", "644"],
+  ["LICENSE", "usr/share/doc/ode/", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+  { source = "target/release/ode", dest = "/usr/bin/ode", mode = "755" },
+  { source = "packaging/org.example.Ode.desktop", dest = "/usr/share/applications/org.example.Ode.desktop", mode = "644" },
+  { source = "packaging/hicolor/128x128/apps/org.example.Ode.svg", dest = "/usr/share/icons/hicolor/128x128/apps/org.example.Ode.svg", mode = "644" },
+  { source = "packaging/org.example.Ode.metainfo.xml", dest = "/usr/share/metainfo/org.example.Ode.metainfo.xml", mode = "644" },
+  { source = "LICENSE", dest = "/usr/share/doc/ode/LICENSE", mode = "644" },
+]
+# auto-req defaults to true and derives Requires: from the linked sonames, so
+# the rpm stays distribution-agnostic.
+auto-req = true
