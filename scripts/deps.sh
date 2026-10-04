@@ -7,7 +7,10 @@
 set -euo pipefail
 
 # --- pkg-config modules Ode links against ------------------------------------
-MODULES=(gtk4 libadwaita-1 webkitgtk-6.0)
+# openssl is pulled in by reqwest (native-tls). Debian/Ubuntu get it
+# transitively via the webkit dev package, Fedora does not, which is why it is
+# listed here instead of relying on that.
+MODULES=(gtk4 libadwaita-1 webkitgtk-6.0 openssl)
 
 # --- distribution detection --------------------------------------------------
 detect_distro() {
@@ -37,18 +40,18 @@ packages_for() {
   case "$1" in
     alt)
       echo "libgtk+4-devel libadwaita-devel libwebkitgtk6.0-devel \
-gcc gcc-c++ make pkg-config"
+libopenssl-devel gcc gcc-c++ make pkg-config"
       ;;
     debian)
-      echo "libgtk-4-dev libadwaita-1-dev libwebkitgtk-6.0-dev \
+      echo "libgtk-4-dev libadwaita-1-dev libwebkitgtk-6.0-dev libssl-dev \
 build-essential pkg-config"
       ;;
     fedora)
-      echo "gtk4-devel libadwaita-devel webkitgtk6.0-devel \
+      echo "gtk4-devel libadwaita-devel webkitgtk6.0-devel openssl-devel \
 gcc gcc-c++ make pkgconf-pkg-config"
       ;;
     arch)
-      echo "gtk4 libadwaita webkitgtk-6.0 base-devel"
+      echo "gtk4 libadwaita webkitgtk-6.0 openssl base-devel"
       ;;
   esac
 }
