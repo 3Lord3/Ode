@@ -168,8 +168,8 @@ fn add_app_actions(app: &libadwaita::Application, state: &Rc<AppState>, window: 
             let w = win_s.clone();
             Rc::new(move |m| handle_msg(&s, &w, m))
         };
-        let win = settings::build(&state_s, &win_s, on_msg);
-        win.present();
+        let dlg = settings::build(&state_s, on_msg);
+        dlg.present(Some(&win_s));
     });
     app.add_action(&act_settings);
 
@@ -177,14 +177,13 @@ fn add_app_actions(app: &libadwaita::Application, state: &Rc<AppState>, window: 
     let win_a = window.clone();
     let act_about = gio::SimpleAction::new("about", None);
     act_about.connect_activate(move |_, _| {
-        let dlg = libadwaita::AboutWindow::builder()
+        let dlg = libadwaita::AboutDialog::builder()
             .application_name(state_a.tr.strings().app_title)
             .version("0.1.0")
             .website("https://docs.genius.com/")
             .license_type(gtk4::License::MitX11)
-            .transient_for(&win_a)
             .build();
-        dlg.present();
+        dlg.present(Some(&win_a));
     });
     app.add_action(&act_about);
 
