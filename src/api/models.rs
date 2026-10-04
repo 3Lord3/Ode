@@ -41,6 +41,34 @@ pub struct Song {
     /// The current API returns lyrics only here, and often not at all
     #[serde(default, rename = "lyrics_plaintext")]
     pub lyrics_plaintext: Option<String>,
+    #[serde(default)]
+    pub description: Option<Description>,
+    #[serde(default)]
+    pub producer_artists: Vec<Artist>,
+    #[serde(default)]
+    pub track_number: Option<i64>,
+    #[serde(default)]
+    pub album: Option<SongAlbum>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SongAlbum {
+    pub name: Option<String>,
+    pub full_title: Option<String>,
+}
+
+/// Genius returns the description as an HTML string in search and as
+/// `{plain, dom}` in `/songs/{id}`
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Description {
+    Html(String),
+    Object {
+        #[serde(default)]
+        plain: Option<String>,
+        #[serde(default)]
+        dom: Option<serde_json::Value>,
+    },
 }
 
 // ---- Artist ----
