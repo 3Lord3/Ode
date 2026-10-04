@@ -42,7 +42,10 @@ impl AppState {
     }
 
     pub fn client(&self) -> Option<GeniusClient> {
-        self.token.borrow().as_ref().map(|t| GeniusClient::new(t.clone(), self.cache.clone()))
+        self.token
+            .borrow()
+            .as_ref()
+            .map(|t| GeniusClient::new(t.clone(), self.cache.clone()))
     }
 
     /// Run a blocking closure on a worker thread and deliver the result to the UI thread

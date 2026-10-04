@@ -19,7 +19,11 @@ impl Cache {
                     .join(".cache")
             })
             .join("genius");
-        Self { dir, ttl_secs, max_bytes: max_mb * 1024 * 1024 }
+        Self {
+            dir,
+            ttl_secs,
+            max_bytes: max_mb * 1024 * 1024,
+        }
     }
 
     fn path_for(&self, url: &str) -> PathBuf {
@@ -33,7 +37,13 @@ impl Cache {
     pub fn get(&self, url: &str) -> Option<String> {
         let p = self.path_for(url);
         let meta = std::fs::metadata(&p).ok()?;
-        let age = now().saturating_sub(meta.modified().ok()?.duration_since(UNIX_EPOCH).ok()?.as_secs());
+        let age = now().saturating_sub(
+            meta.modified()
+                .ok()?
+                .duration_since(UNIX_EPOCH)
+                .ok()?
+                .as_secs(),
+        );
         if age > self.ttl_secs {
             return None;
         }
@@ -82,7 +92,10 @@ impl Cache {
 }
 
 fn now() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 #[cfg(test)]
@@ -123,4 +136,3 @@ mod tests {
         c.clear().unwrap();
     }
 }
-
