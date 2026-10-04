@@ -106,11 +106,8 @@ fn strip_tags(html: &str) -> String {
         match c {
             '<' => depth += 1,
             '>' => depth = depth.saturating_sub(1),
-            '\n' | '\t' => {
-                if depth > 0 {
-                    out.push(' ');
-                }
-            }
+            '\n' | '\t' if depth > 0 => out.push(' '),
+            '\n' | '\t' => {}
             _ if depth == 0 => out.push(c),
             _ => {}
         }
