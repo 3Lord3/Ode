@@ -71,12 +71,19 @@ pub struct Strings {
     pub no_token_desc: &'static str,
     pub close: &'static str,
     pub no_lyrics_action: &'static str,
+    pub song_info: &'static str,
+    pub info_title: &'static str,
+    pub info_artists: &'static str,
+    pub info_release: &'static str,
+    pub info_producers: &'static str,
+    pub info_album: &'static str,
+    pub info_about: &'static str,
 }
 
 const RU: Strings = Strings {
     lang: Lang::Ru,
     app_title: "Ode",
-    search_placeholder: "Поиск песен, исполнителей…",
+    search_placeholder: "Поиск песен…",
     empty_title: "Ничего не найдено",
     empty_desc: "Попробуйте изменить запрос.",
     error_title: "Ошибка загрузки",
@@ -86,7 +93,7 @@ const RU: Strings = Strings {
     copy_lyrics: "Копировать лирику",
     copied: "Скопировано",
     init_search: "Что ищем?",
-    search_hint: "Введите название песни или исполнителя",
+    search_hint: "Введите название песни",
     settings: "Настройки",
     about: "О приложении",
     clear_cache: "Очистить кэш",
@@ -103,12 +110,19 @@ const RU: Strings = Strings {
     no_token_desc: "Сборка выполнена без встроенного токена доступа",
     close: "Закрыть",
     no_lyrics_action: "_Повторить загрузку",
+    song_info: "О песне",
+    info_title: "Название",
+    info_artists: "Исполнители",
+    info_release: "Дата выхода",
+    info_producers: "Продюсеры",
+    info_album: "Альбом",
+    info_about: "О треке",
 };
 
 const EN: Strings = Strings {
     lang: Lang::En,
     app_title: "Ode",
-    search_placeholder: "Search songs, artists…",
+    search_placeholder: "Search songs…",
     empty_title: "Nothing found",
     empty_desc: "Try a different query.",
     error_title: "Load error",
@@ -118,7 +132,7 @@ const EN: Strings = Strings {
     copy_lyrics: "Copy lyrics",
     copied: "Copied",
     init_search: "What to find?",
-    search_hint: "Enter a song or artist to search",
+    search_hint: "Enter a song title",
     settings: "Settings",
     about: "About",
     clear_cache: "Clear cache",
@@ -135,6 +149,13 @@ const EN: Strings = Strings {
     no_token_desc: "This build was made without an embedded access token",
     close: "Close",
     no_lyrics_action: "_Retry loading",
+    song_info: "Song info",
+    info_title: "Title",
+    info_artists: "Artists",
+    info_release: "Release date",
+    info_producers: "Producers",
+    info_album: "Album",
+    info_about: "About",
 };
 
 impl Strings {
