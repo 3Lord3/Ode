@@ -62,18 +62,23 @@ jobs:
 
   # Produce every Linux artifact here too, so a packaging regression is caught
   # on a branch, not at a tag. The AppImage needs linuxdeploy downloads.
+  # Container like the distro matrix: ubuntu-latest hosts libadwaita 1.5, which
+  # is below what Ode needs (rpm for check-package-deps, curl for linuxdeploy).
   packages:
     name: packages
     runs-on: ubuntu-latest
+    container: debian:trixie
     needs: [tests]
     steps:
+      - name: Bootstrap the container
+        run: apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates git rpm
       - uses: actions/checkout@v5
       - name: Install build dependencies
+        run: ./scripts/deps.sh --install
+      - name: Install Rust
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends curl ca-certificates rpm
-          sudo ./scripts/deps.sh --install
-      - uses: dtolnay/rust-toolchain@stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
       - run: ./scripts/package.sh
       - name: Dependencies must come from sonames, not package names
