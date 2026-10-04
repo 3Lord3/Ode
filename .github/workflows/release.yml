@@ -27,16 +27,19 @@ jobs:
   native:
     name: deb + rpm
     runs-on: ubuntu-latest
+    container: debian:trixie
     steps:
+      - name: Bootstrap the container
+        run: apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates git rpm
       - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.tag || github.ref }}
       - name: Install build dependencies
+        run: ./scripts/deps.sh --install
+      - name: Install Rust
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends curl ca-certificates rpm
-          sudo ./scripts/deps.sh --install
-      - uses: dtolnay/rust-toolchain@stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
       - run: ./scripts/package.sh
       - name: Dependencies must come from sonames, not package names
@@ -52,16 +55,19 @@ jobs:
   appimage:
     name: AppImage
     runs-on: ubuntu-latest
+    container: debian:trixie
     steps:
+      - name: Bootstrap the container
+        run: apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates git
       - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.tag || github.ref }}
       - name: Install build dependencies
+        run: ./scripts/deps.sh --install
+      - name: Install Rust
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends curl ca-certificates
-          sudo ./scripts/deps.sh --install
-      - uses: dtolnay/rust-toolchain@stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
       - run: ./scripts/appimage.sh
       - uses: actions/upload-artifact@v7
