@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
-# Build the AppImage with linuxdeploy + its GTK plugin.
-#
-# Ode is a GTK4 / libadwaita / WebKitGTK app. linuxdeploy collects every
-# library the binary links against into the AppDir (it also follows the
-# WebKitWebProcess and the *_gresource binaries), and the GTK plugin repairs
-# the GLib wrappers into AppImage-appropriate ones so a Wayland session is not
-# dragged through XWayland.
-#
-# STATUS: written, not yet built in this environment. linuxdeploy and the GTK
-# plugin are downloaded on the first run; the GTK plugin only gained GTK4
-# support recently, so expect one round of adjustment if a distro still pins an
-# old linuxdeploy-plugin-gtk.
+# Build the AppImage with linuxdeploy + its GTK plugin. Both are fetched on
+# the first run; the GTK plugin needs DEPLOY_GTK_VERSION=4.
 set -euo pipefail
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -25,8 +15,7 @@ appdir="$root/target/appimage/Ode.AppDir"
 cache="$HOME/.cache/ode-appimage"
 mkdir -p "$appdir" "$cache"
 
-# The desktop file and icon have to be inside the AppDir before linuxdeploy
-# runs, or it refuses to look at them.
+# linuxdeploy needs the desktop file and icon inside the AppDir.
 rm -rf "$appdir/usr" "$appdir/AppRun"
 install -Dm755 target/release/ode "$appdir/usr/bin/ode"
 install -Dm644 packaging/io.ode.lyrics.desktop \
@@ -40,9 +29,7 @@ fetch() { # $1=url, $2=dest
 
 fetch "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage" \
   "$cache/linuxdeploy.AppImage"
-# The gtk plugin is shipped as a bash script, not an AppImage: an AppImage URL
-# 404s (the release has no assets). It is experimental and needs a few dev
-# packages of its own, installed below.
+# The gtk plugin ships as a shell script, not an AppImage.
 if [ -x "$cache/linuxdeploy-plugin-gtk" ]; then
   :
 else
@@ -53,16 +40,14 @@ fi
 fetch "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage" \
   "$cache/linuxdeploy-plugin-appimage.AppImage"
 
-# The gtk plugin needs `file`, librsvg and gobject-introspection dev files to
-# bundle GTK schemas and typelibs; webkit/gtk dev packages do not cover them.
+# gtk plugin deps for bundling GTK schemas and typelibs.
 if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ]; then
   apt-get update -qq
   apt-get install -y --no-install-recommends file librsvg2-dev libgirepository1.0-dev
 fi
 
-# linuxdeploy discovers its plugins by an exact executable name on PATH; put
-# ours on a bin dir we prepend. APPIMAGE_EXTRACT_AND_RUN is needed because the
-# runners have no FUSE.
+# linuxdeploy finds plugins by name on PATH. APPIMAGE_EXTRACT_AND_RUN works
+# around the missing FUSE in runners.
 mkdir -p "$cache/bin"
 ln -sf "$cache/linuxdeploy-plugin-gtk" "$cache/bin/linuxdeploy-plugin-gtk"
 ln -sf "$cache/linuxdeploy-plugin-appimage.AppImage" "$cache/bin/linuxdeploy-plugin-appimage"
@@ -70,31 +55,21 @@ export PATH="$cache/bin:$PATH"
 export DEPLOY_GTK_VERSION=4
 export APPIMAGE_EXTRACT_AND_RUN=1
 
-# The GTK plugin only prepares the AppDir here; the AppImage is produced
-# below so the generated AppRun hook can be fixed up first.
+# Build the AppDir only: the AppRun hook is patched below before packaging.
 "$cache/linuxdeploy.AppImage" --appdir "$appdir" \
   --desktop-file "$appdir/usr/share/applications/io.ode.lyrics.desktop" \
   --icon-file "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg" \
   --plugin gtk
 
-# The GTK plugin's AppRun hook does two things that break a GTK4/libadwaita
-# app:
-#   * export GTK_THEME="Adwaita:<variant>" - with GTK_THEME set libadwaita
-#     skips its own stylesheet and falls back to plain GTK (the squat,
-#     old-looking "GTK3" style).
-#   * export GDK_BACKEND=x11 - forces XWayland, where GTK reads the window
-#     button layout from XSETTINGS. Compositors without XSETTINGS (niri, sway)
-#     then fall back to the default minimize,maximize,close regardless of the
-#     user's button-layout setting.
-# Drop both so GTK autodetects the session and libadwaita styles normally.
+# The hook forces GTK_THEME and GDK_BACKEND=x11; both break libadwaita on
+# Wayland, so drop them.
 hook="$appdir/apprun-hooks/linuxdeploy-plugin-gtk.sh"
 if [ -f "$hook" ]; then
   sed -i -e 's|^export GTK_THEME=.*|unset GTK_THEME|' \
          -e 's|^export GDK_BACKEND=.*|unset GDK_BACKEND|' "$hook"
 fi
 
-# The appimage plugin writes the result to the process cwd (the repo root)
-# as "<binary>-x86_64.AppImage", not into the AppDir. Rename it here.
+# The appimage plugin drops "<binary>-x86_64.AppImage" in cwd, not the AppDir.
 "$cache/linuxdeploy-plugin-appimage.AppImage" --appdir="$appdir"
 img=$(ls "$root"/Ode-*.AppImage 2>/dev/null | head -1)
 [ -n "$img" ] || { echo "no AppImage produced" >&2; exit 1; }
