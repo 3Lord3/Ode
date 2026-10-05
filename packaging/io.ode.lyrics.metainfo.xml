@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.example.Ode</id>
+  <id>io.ode.lyrics</id>
   <name>Ode</name>
   <summary>Read lyrics from Genius</summary>
   <summary xml:lang="ru">Читать тексты песен из Genius</summary>
@@ -16,6 +16,6 @@
       тема, шрифты и локаль берутся из системы.
     </p>
   </description>
-  <launchable type="desktop-id">org.example.Ode.desktop</launchable>
+  <launchable type="desktop-id">io.ode.lyrics.desktop</launchable>
   <content_rating type="oars-1.1"/>
 </component>

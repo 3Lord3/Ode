@@ -29,10 +29,10 @@ mkdir -p "$appdir" "$cache"
 # runs, or it refuses to look at them.
 rm -rf "$appdir/usr" "$appdir/AppRun"
 install -Dm755 target/release/ode "$appdir/usr/bin/ode"
-install -Dm644 packaging/org.example.Ode.desktop \
-  "$appdir/usr/share/applications/org.example.Ode.desktop"
-install -Dm644 packaging/hicolor/128x128/apps/org.example.Ode.svg \
-  "$appdir/usr/share/icons/hicolor/128x128/apps/org.example.Ode.svg"
+install -Dm644 packaging/io.ode.lyrics.desktop \
+  "$appdir/usr/share/applications/io.ode.lyrics.desktop"
+install -Dm644 packaging/hicolor/128x128/apps/io.ode.lyrics.svg \
+  "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg"
 
 fetch() { # $1=url, $2=dest
   [ -x "$2" ] || { curl -L --fail -o "$2" "$1"; chmod +x "$2"; }
@@ -71,8 +71,8 @@ export DEPLOY_GTK_VERSION=4
 export APPIMAGE_EXTRACT_AND_RUN=1
 
 "$cache/linuxdeploy.AppImage" --appdir "$appdir" \
-  --desktop-file "$appdir/usr/share/applications/org.example.Ode.desktop" \
-  --icon-file "$appdir/usr/share/icons/hicolor/128x128/apps/org.example.Ode.svg" \
+  --desktop-file "$appdir/usr/share/applications/io.ode.lyrics.desktop" \
+  --icon-file "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg" \
   --plugin gtk \
   --output appimage
 

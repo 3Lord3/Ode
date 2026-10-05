@@ -100,12 +100,12 @@ jobs:
         run: |
           sudo flatpak-builder --force-clean \
             --repo=repo --install-deps-from=flathub \
-            build packaging/flatpak/org.example.Ode.yml
+            build packaging/flatpak/io.ode.lyrics.yml
       - name: Bundle
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)
           sudo flatpak build-bundle repo \
-            "Ode_${version}_x86_64.flatpak" org.example.Ode
+            "Ode_${version}_x86_64.flatpak" io.ode.lyrics
       - uses: actions/upload-artifact@v7
         with:
           name: flatpak
