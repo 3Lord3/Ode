@@ -70,14 +70,32 @@ export PATH="$cache/bin:$PATH"
 export DEPLOY_GTK_VERSION=4
 export APPIMAGE_EXTRACT_AND_RUN=1
 
+# The GTK plugin only prepares the AppDir here; the AppImage is produced
+# below so the generated AppRun hook can be fixed up first.
 "$cache/linuxdeploy.AppImage" --appdir "$appdir" \
   --desktop-file "$appdir/usr/share/applications/io.ode.lyrics.desktop" \
   --icon-file "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg" \
-  --plugin gtk \
-  --output appimage
+  --plugin gtk
+
+# The GTK plugin's AppRun hook does two things that break a GTK4/libadwaita
+# app:
+#   * export GTK_THEME="Adwaita:<variant>" - with GTK_THEME set libadwaita
+#     skips its own stylesheet and falls back to plain GTK (the squat,
+#     old-looking "GTK3" style).
+#   * export GDK_BACKEND=x11 - forces XWayland, where GTK reads the window
+#     button layout from XSETTINGS. Compositors without XSETTINGS (niri, sway)
+#     then fall back to the default minimize,maximize,close regardless of the
+#     user's button-layout setting.
+# Drop both so GTK autodetects the session and libadwaita styles normally.
+hook="$appdir/apprun-hooks/linuxdeploy-plugin-gtk.sh"
+if [ -f "$hook" ]; then
+  sed -i -e 's|^export GTK_THEME=.*|unset GTK_THEME|' \
+         -e 's|^export GDK_BACKEND=.*|unset GDK_BACKEND|' "$hook"
+fi
 
 # The appimage plugin writes the result to the process cwd (the repo root)
 # as "<binary>-x86_64.AppImage", not into the AppDir. Rename it here.
+"$cache/linuxdeploy-plugin-appimage.AppImage" --appdir="$appdir"
 img=$(ls "$root"/Ode-*.AppImage 2>/dev/null | head -1)
 [ -n "$img" ] || { echo "no AppImage produced" >&2; exit 1; }
 mv "$img" "target/appimage/$name"
