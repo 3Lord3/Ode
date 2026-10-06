@@ -1,5 +1,7 @@
 <div align="center">
 
+<img alt="Ode" src="packaging/hicolor/512x512/apps/io.ode.lyrics.png" width="128">
+
 # Ode
 
 <img alt="version" src="https://img.shields.io/badge/version-0.1.0-4fb3ff?style=for-the-badge&labelColor=0f131b">

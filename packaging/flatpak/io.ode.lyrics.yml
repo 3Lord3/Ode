@@ -34,8 +34,9 @@ modules:
       - install -Dm755 target/release/ode /app/bin/ode
       - install -Dm644 packaging/io.ode.lyrics.desktop
         /app/share/applications/io.ode.lyrics.desktop
-      - install -Dm644 packaging/hicolor/128x128/apps/io.ode.lyrics.svg
-        /app/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg
+      - for s in 16 22 24 32 48 64 96 128 256 512; do
+        install -Dm644 packaging/hicolor/${s}x${s}/apps/io.ode.lyrics.png
+        /app/share/icons/hicolor/${s}x${s}/apps/io.ode.lyrics.png; done
       - install -Dm644 packaging/io.ode.lyrics.metainfo.xml
         /app/share/metainfo/io.ode.lyrics.metainfo.xml
     sources:
