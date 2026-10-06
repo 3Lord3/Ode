@@ -31,18 +31,18 @@ extended-description = """Search Genius and read song lyrics in a GTK4/libadwait
 depends = "libgtk-4-1, libadwaita-1-0, libwebkitgtk-6.0-4"
 assets = [
   ["target/release/ode", "usr/bin/", "755"],
-  ["packaging/org.example.Ode.desktop", "usr/share/applications/", "644"],
-  ["packaging/hicolor/128x128/apps/org.example.Ode.svg", "usr/share/icons/hicolor/128x128/apps/", "644"],
-  ["packaging/org.example.Ode.metainfo.xml", "usr/share/metainfo/", "644"],
+  ["packaging/io.ode.lyrics.desktop", "usr/share/applications/", "644"],
+  ["packaging/hicolor/128x128/apps/io.ode.lyrics.svg", "usr/share/icons/hicolor/128x128/apps/", "644"],
+  ["packaging/io.ode.lyrics.metainfo.xml", "usr/share/metainfo/", "644"],
   ["LICENSE", "usr/share/doc/ode/", "644"],
 ]
 
 [package.metadata.generate-rpm]
 assets = [
   { source = "target/release/ode", dest = "/usr/bin/ode", mode = "755" },
-  { source = "packaging/org.example.Ode.desktop", dest = "/usr/share/applications/org.example.Ode.desktop", mode = "644" },
-  { source = "packaging/hicolor/128x128/apps/org.example.Ode.svg", dest = "/usr/share/icons/hicolor/128x128/apps/org.example.Ode.svg", mode = "644" },
-  { source = "packaging/org.example.Ode.metainfo.xml", dest = "/usr/share/metainfo/org.example.Ode.metainfo.xml", mode = "644" },
+  { source = "packaging/io.ode.lyrics.desktop", dest = "/usr/share/applications/io.ode.lyrics.desktop", mode = "644" },
+  { source = "packaging/hicolor/128x128/apps/io.ode.lyrics.svg", dest = "/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg", mode = "644" },
+  { source = "packaging/io.ode.lyrics.metainfo.xml", dest = "/usr/share/metainfo/io.ode.lyrics.metainfo.xml", mode = "644" },
   { source = "LICENSE", dest = "/usr/share/doc/ode/LICENSE", mode = "644" },
 ]
 # find-requires in cargo-generate-rpm fails ("RPM_BUILD_ROOT not set") and

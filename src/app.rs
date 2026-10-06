@@ -10,7 +10,7 @@ use crate::ui::settings::{self, Msg};
 use crate::ui::song_page;
 use crate::ui::AppState;
 
-pub const APP_ID: &str = "org.example.Ode";
+pub const APP_ID: &str = "io.ode.lyrics";
 
 pub fn run() -> glib::ExitCode {
     let app = libadwaita::Application::builder()

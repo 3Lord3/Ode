@@ -3,7 +3,7 @@
 #
 # STATUS: written, not yet built here (no flatpak-builder available); treat the
 # runtime version as a starting point.
-app-id: org.example.Ode
+app-id: io.ode.lyrics
 runtime: org.gnome.Platform
 runtime-version: "48"
 sdk: org.gnome.Sdk
@@ -32,12 +32,12 @@ modules:
     build-commands:
       - cargo build --release
       - install -Dm755 target/release/ode /app/bin/ode
-      - install -Dm644 packaging/org.example.Ode.desktop
-        /app/share/applications/org.example.Ode.desktop
-      - install -Dm644 packaging/hicolor/128x128/apps/org.example.Ode.svg
-        /app/share/icons/hicolor/128x128/apps/org.example.Ode.svg
-      - install -Dm644 packaging/org.example.Ode.metainfo.xml
-        /app/share/metainfo/org.example.Ode.metainfo.xml
+      - install -Dm644 packaging/io.ode.lyrics.desktop
+        /app/share/applications/io.ode.lyrics.desktop
+      - install -Dm644 packaging/hicolor/128x128/apps/io.ode.lyrics.svg
+        /app/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg
+      - install -Dm644 packaging/io.ode.lyrics.metainfo.xml
+        /app/share/metainfo/io.ode.lyrics.metainfo.xml
     sources:
       - type: dir
         path: ../..

@@ -4,8 +4,8 @@
 flatpak install -y flathub org.gnome.Platform//48 org.gnome.Sdk//48 \
   org.freedesktop.Sdk.Extension.rust-stable//24.08
 flatpak-builder --force-clean --user --install --install-deps-from=flathub \
-  build packaging/flatpak/org.example.Ode.yml
-flatpak run org.example.Ode
+  build packaging/flatpak/io.ode.lyrics.yml
+flatpak run io.ode.lyrics
 ```
 
 cargo fetches the dependency tree at build time, so the `ode` module carries
