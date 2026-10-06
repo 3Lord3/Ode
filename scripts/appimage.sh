@@ -20,8 +20,10 @@ rm -rf "$appdir/usr" "$appdir/AppRun"
 install -Dm755 target/release/ode "$appdir/usr/bin/ode"
 install -Dm644 packaging/io.ode.lyrics.desktop \
   "$appdir/usr/share/applications/io.ode.lyrics.desktop"
-install -Dm644 packaging/hicolor/128x128/apps/io.ode.lyrics.svg \
-  "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg"
+for s in 16 22 24 32 48 64 96 128 256 512; do
+  install -Dm644 "packaging/hicolor/${s}x${s}/apps/io.ode.lyrics.png" \
+    "$appdir/usr/share/icons/hicolor/${s}x${s}/apps/io.ode.lyrics.png"
+done
 
 fetch() { # $1=url, $2=dest
   [ -x "$2" ] || { curl -L --fail -o "$2" "$1"; chmod +x "$2"; }
@@ -58,7 +60,7 @@ export APPIMAGE_EXTRACT_AND_RUN=1
 # Build the AppDir only: the AppRun hook is patched below before packaging.
 "$cache/linuxdeploy.AppImage" --appdir "$appdir" \
   --desktop-file "$appdir/usr/share/applications/io.ode.lyrics.desktop" \
-  --icon-file "$appdir/usr/share/icons/hicolor/128x128/apps/io.ode.lyrics.svg" \
+  --icon-file "$appdir/usr/share/icons/hicolor/512x512/apps/io.ode.lyrics.png" \
   --plugin gtk
 
 # The hook forces GTK_THEME and GDK_BACKEND=x11; both break libadwaita on
@@ -68,6 +70,30 @@ if [ -f "$hook" ]; then
   sed -i -e 's|^export GTK_THEME=.*|unset GTK_THEME|' \
          -e 's|^export GDK_BACKEND=.*|unset GDK_BACKEND|' "$hook"
 fi
+
+# The shell matches a window to a desktop entry and icon by app id; without one
+# it shows the raw id and a placeholder icon. Install both into the user's data
+# dirs on launch.
+cat > "$appdir/apprun-hooks/ode-integrate.sh" <<'EOF'
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+[ -n "$APPDIR" ] || return 0
+(
+  set +e
+  exec_path="${APPIMAGE:-ode}"
+  install -d "$data/applications"
+  sed "s|^Exec=.*|Exec=\"$exec_path\"|" \
+    "$APPDIR/usr/share/applications/io.ode.lyrics.desktop" \
+    > "$data/applications/io.ode.lyrics.desktop"
+  chmod 644 "$data/applications/io.ode.lyrics.desktop"
+  for s in 16 22 24 32 48 64 96 128 256 512; do
+    install -Dm644 "$APPDIR/usr/share/icons/hicolor/${s}x${s}/apps/io.ode.lyrics.png" \
+      "$data/icons/hicolor/${s}x${s}/apps/io.ode.lyrics.png"
+  done
+  command -v update-desktop-database >/dev/null && update-desktop-database "$data/applications"
+  command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -qtf "$data/icons/hicolor"
+) || true
+EOF
+printf '\n. "$this_dir"/apprun-hooks/ode-integrate.sh\n' >> "$hook"
 
 # The appimage plugin drops "<binary>-x86_64.AppImage" in cwd, not the AppDir.
 "$cache/linuxdeploy-plugin-appimage.AppImage" --appdir="$appdir"
